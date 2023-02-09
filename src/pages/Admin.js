@@ -6,6 +6,9 @@ import '../styles/admin.css';
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar'
 import { Modal, Button } from "react-bootstrap";
 import axios from "axios";
+import fetchTickets from "../utils/fetchTickets";
+import updateTicketCounts from "../utils/updateTicketCounts";
+import TicketsCard from "../components/TicketsCard";
 
 const BASE_URL = process.env.REACT_APP_SERVER_URL
 
@@ -37,43 +40,12 @@ function Admin() {
             console.log(error)
         })
     }
-    const updateTicketCounts = (tickets) => {
-        const data = {
-            open: 0,
-            closed: 0,
-            in_progress: 0,
-            blocked: 0,
-        }
-        tickets.map(x => {
-            if (x.status === "OPEN") data.open++
-            else if (x.status === 'IN_PROGRESS') data.in_progress++
-            else if (x.status === 'BLOCKED') data.blocked++
-            else if (x.status === 'CLOSED') data.closed++
-        })
-        setTicketStatusCount(data)
-    }
-
-    const fetchTickets = () => {
-        axios.get(BASE_URL + '/crm/api/tickets/',
-            {
-                headers: {
-                    'x-access-token': localStorage.getItem('token')
-                }
-            }, {
-            'userId': localStorage.getItem('userId')
-        }).then(function (response) {
-            if (response.status === 200) {
-                updateTicketCounts(response.data)
-            }
-        }).catch(function (error) {
-            console.log(error)
-        })
-    }
 
     useEffect(() => {
         (async () => {
             fetchUsers("")
-            fetchTickets()
+            let tickets = await fetchTickets(localStorage)
+            updateTicketCounts(tickets, setTicketStatusCount)
         })()
     }, [])
 
@@ -129,91 +101,42 @@ function Admin() {
 
                         {/* cards */}
                         <div className="row my-5 mx-2 text-center">
+
                             {/* Open */}
-                            <div className="col-xs-12 col-lg-3 col-md-6 my-1">
-                                <div className="card  cardItem shadow  bg-primary text-dark bg-opacity-25 borders-b" style={{ width: 15 + 'rem' }}>
-                                    <div className="card-body">
-                                        <h5 className="card-subtitle mb-2"><i class="bi bi-pencil text-primary mx-2"></i>Open</h5>
-                                        <hr />
-                                        <div className="row">
-                                            <div className="col">
-                                                <h1 className="col text-dark mx-4">{ticketStatusCount.open}</h1>
-                                            </div>
-                                            <div className="col">
-                                                <div style={{ width: 40, height: 40 }}>
-                                                    <CircularProgressbar value={20} styles={buildStyles({
-                                                        textColor: "red",
-                                                        pathColor: "darkblue",
-                                                    })} />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            <TicketsCard
+                                color='bg-primary'
+                                icon='bi-pencil'
+                                type='Open'
+                                count={ticketStatusCount.open}
+                                total={ticketStatusCount.total}
+                                borders='borders-b' />
 
                             {/* In Progress */}
-                            <div className="col-xs-12 col-lg-3 col-md-6 my-1">
-                                <div className="card shadow  bg-warning text-dark bg-opacity-25 borders-y" style={{ width: 15 + 'rem' }}>
-                                    <div className="card-body">
-                                        <h5 className="card-subtitle mb-2"><i class="bi bi-lightning-charge text-warning mx-2"></i>Progress </h5>
-                                        <hr />
-                                        <div className="row">
-                                            <div className="col">  <h1 className="col text-dark mx-4">{ticketStatusCount.in_progress}</h1> </div>
-                                            <div className="col">
-                                                <div style={{ width: 40, height: 40 }}>
-                                                    <CircularProgressbar value={80} styles={buildStyles({
-                                                        textColor: "red",
-                                                        pathColor: "darkgoldenrod",
-                                                    })} />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            <TicketsCard
+                                color='bg-warning'
+                                icon='bi-lightning-charge'
+                                type='In Progress'
+                                count={ticketStatusCount.in_progress}
+                                total={ticketStatusCount.total}
+                                borders='borders-y' />
 
                             {/* Closed */}
-                            <div className="col-xs-12 col-lg-3 col-md-6 my-1">
-                                <div className="card shadow  bg-success text-dark bg-opacity-25 borders-g" style={{ width: 15 + 'rem' }}>
-                                    <div className="card-body">
-                                        <h5 className="card-subtitle mb-2"><i class="bi bi-check2-circle text-success mx-2"></i>Closed </h5>
-                                        <hr />
-                                        <div className="row">
-                                            <div className="col">  <h1 className="col text-dark mx-4">{ticketStatusCount.closed}</h1> </div>
-                                            <div className="col">
-                                                <div style={{ width: 40, height: 40 }}>
-                                                    <CircularProgressbar value={80} styles={buildStyles({
-                                                        textColor: "red",
-                                                        pathColor: "darkolivegreen",
-                                                    })} />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            <TicketsCard
+                                color='bg-success'
+                                icon='bi-check2-circle'
+                                type='Closed'
+                                count={ticketStatusCount.closed}
+                                total={ticketStatusCount.total}
+                                borders='borders-g' />
 
                             {/* Blocked */}
-                            <div className="col-xs-12 col-lg-3 col-md-6 my-1">
-                                <div className="card shadow  bg-secondary text-dark bg-opacity-25 borders-grey" style={{ width: 15 + 'rem' }}>
-                                    <div className="card-body">
-                                        <h5 className="card-subtitle mb-2"><i class="bi bi-slash-circle text-secondary mx-2"></i>Blocked </h5>
-                                        <hr />
-                                        <div className="row">
-                                            <div className="col">  <h1 className="col text-dark mx-4">{ticketStatusCount.blocked}</h1> </div>
-                                            <div className="col">
-                                                <div style={{ width: 40, height: 40 }}>
-                                                    <CircularProgressbar value={20} styles={buildStyles({
-                                                        textColor: "red",
-                                                        pathColor: "black",
-                                                    })} />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            <TicketsCard
+                                color='bg-secondary'
+                                icon='bi-slash-circle'
+                                type='Blocked'
+                                count={ticketStatusCount.blocked}
+                                total={ticketStatusCount.total}
+                                borders='borders-grey' />
 
                         </div>
                         <hr />
