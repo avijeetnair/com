@@ -1,8 +1,14 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import TicketsCard from "../components/TicketsCard";
-import MaterialTable from '@material-table/core'
-import { ExportCsv, ExportPdf } from "@material-table/exporters";
+import fetchTickets from "../utils/fetchTickets";
+import updateTicketCounts from "../utils/updateTicketCounts";
+import '../styles/engineer.css'
+import axios from "axios";
+import TicketTable from "../components/TicketTable";
+import EditTicketModal from "../components/EditTicketModal";
+
+const BASE_URL = process.env.REACT_APP_SERVER_URL
 
 function Engineer() {
     const [ticketUpdateModal, setTicketUpdateModal] = useState(false)
@@ -14,6 +20,64 @@ function Engineer() {
         total: 1
     })
     const [message, setMessage] = useState("")
+    const [ticketDetails, setTicketDetails] = useState([])
+    const [selectedTicket, setSelectedTicket] = useState({})
+
+    const fetchAndUpdateTickets = async () => {
+        let tickets = await fetchTickets(localStorage)
+        updateTicketCounts(tickets, setTicketStatusCount)
+        setTicketDetails(tickets)
+    }
+
+    useEffect(() => {
+        (async () => {
+            await fetchAndUpdateTickets()
+        })()
+    }, [])
+
+    const closeTicketUpdationModal = () => setTicketUpdateModal(false)
+    const editTicket = (ticket) => {
+        const ticketCopy = { ...ticket }
+        setSelectedTicket(ticketCopy)
+        setTicketUpdateModal(true)
+    }
+    const onTicketUpdate = (e) => {
+        if (e.target.name === 'title')
+            selectedTicket.title = e.target.value
+        else if (e.target.name === 'description')
+            selectedTicket.description = e.target.value
+        else if (e.target.name === "status")
+            selectedTicket.status = e.target.value
+        else if (e.target.name === "ticketPriority")
+            selectedTicket.ticketPriority = e.target.value
+        setSelectedTicket({ ...selectedTicket })
+    }
+
+    const updateTicket = (e) => {
+        e.preventDefault()
+        axios.put(BASE_URL + '/crm/api/tickets/' + selectedTicket.id, selectedTicket, {
+            headers: {
+                'x-access-token': localStorage.getItem('token')
+            }
+        }, {
+            'userId': localStorage.getItem("userId")
+        }).then(
+            (response) => {
+                setMessage("Ticket Updated Successfully")
+                closeTicketUpdationModal()
+                fetchAndUpdateTickets()
+            }
+        ).catch(
+            (error) => {
+                if (error.status === 400)
+                    setMessage(error.message)
+                else if (error.status === 401)
+                    setMessage("Authorization error, retry logging in")
+                closeTicketUpdationModal()
+                console.log(error.message)
+            }
+        )
+    }
 
     return (
         <div className="bg-light">
@@ -63,47 +127,24 @@ function Engineer() {
 
                 </div>
                 <hr />
-                <p class="text-success">{message}</p>
-                <MaterialTable
-                    columns={[
-                        {
-                            title: "Ticket ID",
-                            field: "id",
-                        },
-                        {
-                            title: "TITLE",
-                            field: "title",
-                        },
-                        {
-                            title: "DESCRIPTIONS",
-                            field: "description",
-                            filtering: false
-                        },
-                        {
-                            title: "REPORTER",
-                            field: "reporter",
-                        },
-                        {
-                            title: "PRIORITY",
-                            field: "ticketPriority",
-                        },
-                        {
-                            title: "ASSIGNEE",
-                            field: "assignee",
-                        },
-                        {
-                            title: "Status",
-                            field: "status",
-                            lookup: {
-                                "OPEN": "OPEN",
-                                "IN_PROGRESS": "IN_PROGRESS",
-                                "BLOCKED": "BLOCKED",
-                                "CLOSED": "CLOSED"
-
-                            },
-                        },
-                    ]}
+                <p className="text-success">{message}</p>
+                <TicketTable
+                    editTicket={editTicket}
+                    ticketDetails={ticketDetails}
                 />
+                {
+                    ticketUpdateModal ? (
+                        <EditTicketModal
+                            show={ticketUpdateModal}
+                            onHide={closeTicketUpdationModal}
+                            selectedTicket={selectedTicket}
+                            updateTicket={updateTicket}
+                            onTicketUpdate={onTicketUpdate}
+                        />
+                    ) : (
+                        ""
+                    )
+                }
             </div>
         </div>
     );
