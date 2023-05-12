@@ -76,12 +76,12 @@ function Login() {
                         localStorage.setItem('name', response.data.name)
                         localStorage.setItem('userId', response.data.userId)
                         localStorage.setItem('email', response.data.email)
-                        localStorage.setItem('userType', response.data.userType)
+                        localStorage.setItem('userType', response.data.userTypes)
                         localStorage.setItem('userStatus', response)
                         localStorage.setItem('token', response.data.accessToken)
-                        if (response.data.userType === "CUSTOMER")
+                        if (response.data.userTypes === "CUSTOMER")
                             window.location.href = "/customer"
-                        else if (response.data.userType === 'ENGINEER')
+                        else if (response.data.userTypes === 'ENGINEER')
                             window.location.href = "/engineer"
                         else
                             window.location.href = "/admin"
