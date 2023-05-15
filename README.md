@@ -1,4 +1,6 @@
-<<<<<<< HEAD
+#Link to the Backend of this repo
+https://github.com/avijeetnair/crm-backend
+
 # crm-frontend
 Frontend code of the CRM application
 =======
