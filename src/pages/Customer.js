@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import Sidebar from "../components/Sidebar";
+import Sidebar from "../components/sidebar";
 import TicketsCard from "../components/TicketsCard";
 import fetchTickets from "../utils/fetchTickets";
 import updateTicketCounts from "../utils/updateTicketCounts";
